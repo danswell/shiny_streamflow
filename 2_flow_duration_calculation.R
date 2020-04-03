@@ -100,3 +100,10 @@ streamflow_data2 %>%
   scale_y_log10() +
   facet_wrap(~SiteID, scales = "free_y")
 #Looks good!!
+
+#IQR by month
+
+IQR <- streamflow_data %>%
+  mutate(Month = month(DatetimeAEST)) %>%
+  group_by(SiteID, Month) %>%
+  summarise(First = quantile(Value, 0,25), Median = quantile(Value, 0.5), Last = quantile(Value, 0.75))

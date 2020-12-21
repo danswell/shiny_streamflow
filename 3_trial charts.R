@@ -1,5 +1,6 @@
 #This is where I try to work out the different charts
 
+#Static FEC chart
 Site_FEC %>% 
   filter(SiteID == "410729") %>% 
   ggplot()+
@@ -7,6 +8,17 @@ Site_FEC %>%
   scale_y_log10() + 
   theme_bw()+
   labs(x = "Flow exceedance Probability", y = "ML/Day")
+
+##Monthly flow chart
+
+IQR %>% 
+  filter(SiteID == "410729") %>%
+  ggplot()+
+  geom_point(aes(x = Month, y = Median), color = "blue", size = 3) + 
+  geom_errorbar(aes(x = Month, ymin = First, ymax = Last), width = 0, linetype = "dashed") + 
+  scale_y_log10()+
+  theme_bw()+
+  labs(x = "Month", y = "Median Daily flow (ML/Day) +- IQR")
 
 #Year
 streamflow_data %>% 

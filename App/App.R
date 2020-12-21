@@ -84,8 +84,10 @@ streamflow_data$Year <- year(streamflow_data$DatetimeAEST)
 
 #Read in other datasets
 
-IQR <- read.csv("IQR.csv", header = T)
 Site_FEC <- read.csv("Site_FEC.csv", header = T)
+Site_FEC$SiteID <- as.factor(Site_FEC$SiteID)
+
+Site_FEC <- left_join(Site_FEC, Intermediate, by = c("SiteID"="Siteid"))
 
 ##5// UI
 
@@ -96,7 +98,7 @@ ui <- fluidPage(titlePanel("ACT Streamflow Explorer"),
                     # Select site to plot
                     selectInput(inputId = "site", label = strong("Streamflow Gauge"),
                                 choices = unique(My_meta$Name),
-                                selected = "410776 - Licking Hole Creek above Cotter Junction"),
+                                selected = "410761 - Murrumbidgee River below Lobbs Hole Creek"),
                     
                     # Select date range to be plotted
                     # sliderInput("Date", strong("Date range"), min = min(streamflow_data$DatetimeAEST), max = max(streamflow_data$DatetimeAEST),
@@ -115,23 +117,20 @@ ui <- fluidPage(titlePanel("ACT Streamflow Explorer"),
                     
                     
                     # Add leaflet map
-                    leafletOutput("my_map")),
+                    leafletOutput("my_map", height = 600)),
                   
                   # Output: Description, lineplot, and reference
                   mainPanel(
                     plotlyOutput(outputId = "lineplot", height = "400px"),
-                    #textOutput(outputId = "cumplot", height = "400px"),
                     downloadButton("download", "Download data"),
+                    plotlyOutput(outputId = "lineplot2", height = "400px"),
                     p(),
                     tags$body("Clicking on pin on map can select a site, as can selecting from dropdown menu. Data provided by ACT Government,", a("ACT Government Open Data Portal", href= "https://www.data.act.gov.au/browse?q=ACT%20Daily%20Rainfall%20and%20Streamflow&sortBy=relevance"),". Questions and comments can be directed to
-                    danswell(dot)starrs(at)act(dot)gov(dot)au. Data can be aggregated to monthly or calendar year. Aggregation method is summation. Note this is 
-                    sensitive to the date picker input - partial months and years will be computed as selected on the date picker. So select whole months and years to compute meaningful statistics. 
-                    Likewise, mean is computed based upon the time range selected. 
+                    danswell(dot)starrs(at)act(dot)gov(dot)au. Flow exceedance probabilities based on full record available until 21/12/2020. 
                     Code for this app can be found on", a("github", href="https://github.com/danswell/shiny_streamflow"))
-                  )
+                   )
                 )
-          )
-
+             ) 
 
 
 #6// Define server function
@@ -145,6 +144,16 @@ server <- function(input, output, session) {
       )
     
   })
+  
+  # Subset FEC data by site
+  selected_FEC <- reactive({
+    Site_FEC %>%
+      filter(
+        Name == input$site
+      )
+    
+  })  
+  
   
   #Update slider input to reflect site selected
   observeEvent(input$site, {
@@ -212,7 +221,9 @@ server <- function(input, output, session) {
   
   #Data download
   
-  dfile <-reactive({selected_flow2()
+  dfile <-reactive({selected_flow2() %>% 
+      select(DatetimeAEST, Value, Name, QualityCode) %>% 
+      rename("ML_day" = "Value")
   })
   
   
@@ -224,6 +235,15 @@ server <- function(input, output, session) {
       write.csv(dfile(), file, row.names = F)
     }
   )
+  
+  output$lineplot2 <- renderPlotly({ggplotly(selected_FEC() %>%
+                                              ggplot()+
+                                              geom_line(aes(x = FEC, y = Value), color = "blue")+
+                                              scale_y_log10() + 
+                                              theme_bw()+
+                                              labs(x = "Flow exceedance Probability", y = "ML/Day", title = paste0("Flow exceedance curve for ", input$site)), tooltip = c("FEC", "Value"))
+  })
+  
 }
 
 # Create Shiny object

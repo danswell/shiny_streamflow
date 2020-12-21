@@ -48,6 +48,8 @@ streamflow_data <- streamflow_data %>%
   select(-ranked_flow)
 
 
+my_vector <- seq(from = 0, to = 100)
+
 sites <- unique(streamflow_data$SiteID)
 output <- list()
 ##First attempt at loop
@@ -61,7 +63,7 @@ for(i in 1:length(sites)){
   hold2 <- sub_streamflow_data$FEC
   hold1 <- numeric(length(hold2))
   
-  hold1[sapply(My_vector, function(j) which.min(abs(j - hold2)))] <- 1
+  hold1[sapply(my_vector, function(j) which.min(abs(j - hold2)))] <- 1
   
   sub_streamflow_data$hold1 <- hold1
   
@@ -76,15 +78,16 @@ for(i in 1:length(sites)){
   rm(hold2)
   rm(sub_streamflow_data)
 }
+
 Site_FEC <- bind_rows(output)
 
-write.csv(Site_FEC, "Site_FEC.csv", row.names = FALSE)
+#write.csv(Site_FEC, "Site_FEC.csv", row.names = FALSE)
 
 ###
 
 #test
 
-streamflow_data2 %>%
+Site_FEC %>%
   ggplot() +
   geom_line(aes(x = FEC, y = Value)) +
   scale_y_log10() +
@@ -99,3 +102,4 @@ IQR <- streamflow_data %>%
   summarise(Low = quantile(Value, 0.05), First = quantile(Value, 0.25), Median = quantile(Value, 0.5), Last = quantile(Value, 0.75), High = quantile(Value, 0.95))
 
 write.csv(IQR, "IQR.csv", row.names = FALSE)
+

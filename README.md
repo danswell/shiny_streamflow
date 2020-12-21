@@ -3,6 +3,10 @@ A shiny app for exploring the streamflow data of the ACT
 
 ### Introduction
 
+21 December 2020
+
+First iteration of the app pushed to shinyapps.io
+
 7 May 2020
 
 Update: Project execution moved to rstudio.cloud. This is a web-hosted rstudio environment that links seemlessly with github. THIS IS THE FUTURE OF RSTUDIO!

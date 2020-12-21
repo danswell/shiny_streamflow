@@ -21,8 +21,6 @@ library(plotly)
 
 #2. Read in static data
 
-setwd("./App")
-
 Static_data <- read.csv("streamflow_data.csv", header = T, stringsAsFactors = T)
 Static_data$Value <- as.numeric(Static_data$Value)
 Static_data$DatetimeAEST <- as.POSIXct(Static_data$DatetimeAEST, format = "%Y-%m-%d")

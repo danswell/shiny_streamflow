@@ -22,7 +22,7 @@ library(soql)
 Query <- soql() %>%
   soql_add_endpoint("https://www.data.act.gov.au/resource/yuhh-28ai.json") %>%
   soql_simple_filter("VariableName", "Stream Discharge Ml/Day") %>%
-  soql_where("DatetimeAEST < '2020-03-01T09:00.000'") %>% #dynamic date using sys.Date()
+  soql_where("DatetimeAEST > '2020-03-01T09:00.000'") %>% #dynamic date using sys.Date()
   soql_select("DatetimeAEST, Value, SiteID, QualityCode") %>%
   as.character()
 

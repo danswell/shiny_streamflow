@@ -13,8 +13,21 @@ library(ggplot2)
 
 # Read in data
 
-streamflow_data <- read.csv("streamflow_data.csv", header = T)
-str(streamflow_data)
+streamflow_data2 <- read.csv("streamflow_data.csv", header = T)
+str(streamflow_data2)
+streamflow_data2$DatetimeAEST <- as.Date(streamflow_data2$DatetimeAEST)
+streamflow_data2$SiteID <- as.factor(streamflow_data2$SiteID)
+streamflow_data2$QualityCode <- as.factor(streamflow_data2$QualityCode)
+
+streamflow_data2 <- streamflow_data2 %>% 
+  select(-Name)
+
+
+max(streamflow_data2$DatetimeAEST)
+min(streamflow_data$DatetimeAEST)
+
+#bind data with data pulled from API
+streamflow_data <- bind_rows(streamflow_data, streamflow_data2)
 
 streamflow_data$DatetimeAEST <- as.Date(streamflow_data$DatetimeAEST)
 streamflow_data$SiteID <- as.factor(streamflow_data$SiteID)
@@ -26,39 +39,13 @@ streamflow_data$SiteID <- as.factor(streamflow_data$SiteID)
 
 
 streamflow_data <- streamflow_data %>%
-  filter(QualityCode < 200) %>%
+  filter(as.numeric(QualityCode) < 200) %>%
   group_by(SiteID) %>%
   arrange(desc(Value)) %>%
   mutate(ranked_flow = seq(1:length(Value))) %>%
   mutate(FEC = 100*(ranked_flow/(length(Value)+1))) %>%
-  arrange(DatetimeAEST)
-
-##Now to subset this down to whole numbers for simplicity
-
-My_vector  <- as.data.frame(seq(0,99))
-colnames(My_vector) <- c("Value")
-
-My_vector <- 1:100
-Stream_fec <- streamflow_data$FEC
-#To extract the nearest FEC value to the whole number, I can use the function which.min
-
-I <- 6:10
-S <- numeric(length(T))
-S[sapply(I, function(i) which.min(abs(i - T)))] <- 1
-S
-
-
-streamflow_index <- numeric(length(Stream_fec))
-streamflow_index[sapply(My_vector, function(i) which.min(abs(i-Stream_fec)))] <- 1
-streamflow_index
-
-streamflow_data$streamflow_index <- streamflow_index
-
-
-streamflow_data2 <- streamflow_data %>%
-  filter(streamflow_index == 1)
-
-#This works, now to write it into a loop?
+  arrange(DatetimeAEST) %>% 
+  select(-ranked_flow)
 
 
 sites <- unique(streamflow_data$SiteID)
@@ -80,7 +67,7 @@ for(i in 1:length(sites)){
   
   sub_streamflow_data <- sub_streamflow_data %>%
     filter(hold1 == 1) %>%
-    select(SiteID, Name, FEC, Value)
+    select(SiteID, FEC, Value)
   
   sub_streamflow_data <- as.data.frame(sub_streamflow_data)
   
@@ -89,14 +76,17 @@ for(i in 1:length(sites)){
   rm(hold2)
   rm(sub_streamflow_data)
 }
-streamflow_data2 <- bind_rows(output)
+Site_FEC <- bind_rows(output)
+
+write.csv(Site_FEC, "Site_FEC.csv", row.names = FALSE)
+
 ###
 
 #test
 
 streamflow_data2 %>%
   ggplot() +
-  geom_point(aes(x = FEC, y = Value)) +
+  geom_line(aes(x = FEC, y = Value)) +
   scale_y_log10() +
   facet_wrap(~SiteID, scales = "free_y")
 #Looks good!!
@@ -104,6 +94,8 @@ streamflow_data2 %>%
 #IQR by month
 
 IQR <- streamflow_data %>%
-  mutate(Month = month(DatetimeAEST)) %>%
+  mutate(Month = month(DatetimeAEST, label = TRUE, abbr = TRUE)) %>%
   group_by(SiteID, Month) %>%
-  summarise(First = quantile(Value, 0,25), Median = quantile(Value, 0.5), Last = quantile(Value, 0.75))
+  summarise(Low = quantile(Value, 0.05), First = quantile(Value, 0.25), Median = quantile(Value, 0.5), Last = quantile(Value, 0.75), High = quantile(Value, 0.95))
+
+write.csv(IQR, "IQR.csv", row.names = FALSE)

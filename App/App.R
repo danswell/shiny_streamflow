@@ -21,11 +21,9 @@ library(plotly)
 
 #2. Read in static data
 
-setwd("./App")
-
 Static_data <- read.csv("streamflow_data.csv", header = T, stringsAsFactors = T)
 Static_data$Value <- as.numeric(Static_data$Value)
-Static_data$DatetimeAEST <- as.POSIXct(Static_data$DatetimeAEST, format = "%Y-%m-%d")
+Static_data$DatetimeAEST <- as.POSIXct(Static_data$DatetimeAEST, format = "%Y-%m-%d", tz = "Etc/GMT-10")
 Static_data$DatetimeAEST <- as_date(Static_data$DatetimeAEST)
 Static_data$SiteID <- as.factor(Static_data$SiteID)
 Static_data <- Static_data[,1:4]
@@ -39,7 +37,7 @@ Static_data <- Static_data[,1:4]
 #Pull historic data
 
 Query <- soql() %>%
-  soql_add_endpoint("https://www.data.act.gov.au/resource/yuhh-28ai.json") %>%
+  soql_add_endpoint("https://www.data.act.gov.au/resource/v9nd-cfqv.json") %>%
   soql_simple_filter("VariableName", "Stream Discharge Ml/Day") %>%
   soql_where("DatetimeAEST > '2020-03-01T09:00.000'") %>% #dynamic date using sys.Date()
   soql_select("DatetimeAEST, Value, SiteID, QualityCode") %>%
@@ -49,7 +47,7 @@ streamflow_data <- read.socrata(Query)
 
 #Prep data
 streamflow_data$Value <- as.numeric(streamflow_data$Value)
-streamflow_data$DatetimeAEST <- as.POSIXct(streamflow_data$DatetimeAEST, format = "%Y-%m-%dT%H:%M:%S")
+streamflow_data$DatetimeAEST <- as.POSIXct(streamflow_data$DatetimeAEST, format = "%Y-%m-%dT%H:%M:%S", tz = "Etc/GMT-10")
 streamflow_data$DatetimeAEST <- as_date(streamflow_data$DatetimeAEST)
 streamflow_data$SiteID <- as.factor(streamflow_data$SiteID)
 streamflow_data$QualityCode <- as.integer(streamflow_data$QualityCode)
@@ -59,7 +57,7 @@ streamflow_data <- bind_rows(streamflow_data, Static_data)
 # Extract metadata from data.act.gov.au
 
 Query2 <- soql() %>%
-  soql_add_endpoint("https://www.data.act.gov.au/resource/tsq4-63ge.json") %>%
+  soql_add_endpoint("https://www.data.act.gov.au/resource/e2ar-siik.json") %>%
   soql_select("Siteid, siteName, latitude, longitude") %>%
   as.character()
 

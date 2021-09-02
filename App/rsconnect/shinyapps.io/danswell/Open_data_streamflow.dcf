@@ -1,0 +1,10 @@
+name: Open_data_streamflow
+title:
+username:
+account: danswell
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3421595
+bundleId: 4991631
+url: https://danswell.shinyapps.io/Open_data_streamflow/
+when: 1630558512.21272
